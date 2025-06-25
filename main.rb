@@ -1,9 +1,14 @@
 require 'optparse'
 
+require_relative "Scraper"
+
+
 def main(options)
-  puts "Scraping organization: #{options[:org]}"
-  # Your scraping logic goes here
+  scraper = Scraper.new(options[:org])
+
+  scraper.scrape()
 end
+
 
 if __FILE__ == $0
   options = { org: "vercel" }

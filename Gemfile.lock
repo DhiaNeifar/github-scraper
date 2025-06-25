@@ -1,0 +1,27 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    bigdecimal (3.1.3)
+    csv (3.2.6)
+    httparty (0.23.1)
+      csv
+      mini_mime (>= 1.0.0)
+      multi_xml (>= 0.5.2)
+    mini_mime (1.1.5)
+    multi_xml (0.7.2)
+      bigdecimal (~> 3.1)
+    nokogiri (1.18.8-arm64-darwin)
+      racc (~> 1.4)
+    racc (1.6.2)
+    sorbet-runtime (0.5.12201)
+
+PLATFORMS
+  arm64-darwin
+
+DEPENDENCIES
+  httparty
+  nokogiri
+  sorbet-runtime
+
+BUNDLED WITH
+   2.6.9
