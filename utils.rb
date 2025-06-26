@@ -8,22 +8,29 @@ CSS_CLASSES = {
   "repository_pagination" => "a.prc-Pagination-Page-yoEQf",
   "pullrequest_pagination" => ".paginate-container.d-none.d-sm-flex.flex-sm-justify-center",
   "repository" => ".ListItem-module__listItem--kHali .Title-module__anchor--SyQM6 span",
-  "archive" => ".flash.flash-warn.flash-full.border-top-0.text-center.text-bold.py-2"
+  "archive" => ".flash.flash-warn.flash-full.border-top-0.text-center.text-bold.py-2",
+  "pullrequest_box" => ".Box-row.Box-row--focus-gray.p-0.mt-0.js-navigation-item.js-issue-row"
 }
 
 
 extend T::Sig
 
-sig { params(url: String).returns(T.nilable(Nokogiri::HTML::Document)) }
-def test_connection(url)
-  response = HTTParty.get(url)
+sig { params(url: String, rate_limiter: Integer).returns(T.nilable(Nokogiri::HTML::Document)) }
+def connect(url, rate_limiter = 1)
+  loop do
+    response = HTTParty.get(url)
 
-  if response.code.between?(200, 299)
-    document = Nokogiri::HTML(response.body)
-    document
-  else
-    puts "Request failed with status code: #{response.code}"
-    nil
+    case response.code
+    when 200..299
+      return Nokogiri::HTML(response.body)
+    when 429
+      puts "Error 429: Too Many Requests => Rate limited. Sleeping for #{rate_limiter} seconds..."
+      sleep(rate_limiter)
+      rate_limiter *= 2
+    else
+      puts "Request failed with status code: #{response.code}"
+      return nil
+    end
   end
 rescue SocketError => e
   puts "Network error: #{e.message}"
@@ -32,6 +39,7 @@ rescue StandardError => e
   puts "Unexpected error: #{e.message}"
   nil
 end
+
 
 
 sig { params(document: Nokogiri::HTML::Document, css_class: String).returns(Integer) }

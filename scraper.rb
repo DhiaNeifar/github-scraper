@@ -31,7 +31,7 @@ class Scraper
 
   sig { void }
   def scrape
-    repositories_document = test_connection(@repositories_url)
+    repositories_document = connect(@repositories_url)
     if repositories_document
       number_pages = get_number_pages(repositories_document, CSS_CLASSES["repository_pagination"])
       puts number_pages
@@ -47,8 +47,8 @@ class Scraper
   sig { params(number_pages: Integer).void }
   def get_repositories(number_pages)
     for page_index in 1..number_pages
-      repositories_per_page_url = @repositories_url + "?page=#{page_index}"
-      repositories_page_document = test_connection(repositories_per_page_url)
+      repositories_per_page_url = "#{@repositories_url}?page=#{page_index}"
+      repositories_page_document = connect(repositories_per_page_url)
       if repositories_page_document
         repositories_page_document.css(CSS_CLASSES['repository']).each do |repository_name|
           repository_name = repository_name.text.strip

@@ -23,7 +23,7 @@ class Repository
     @name = repository_name
 
     @repository_url = "#{GITHUB_URL}/#{@organization}/#{@name}"
-    repository_document = test_connection(@repository_url)
+    repository_document = connect(@repository_url)
     @is_archived = !repository_document.at_css(CSS_CLASSES["archive"]).nil?
 
 
@@ -33,11 +33,23 @@ class Repository
   sig { void }
   def get_pullrequests()
     pullrequests_url = "#{@repository_url}/pulls?q="
-    puts pullrequests_url
-    pullrequests_document = test_connection(pullrequests_url)
+    pullrequests_document = connect(pullrequests_url)
     if pullrequests_document
       number_pages = get_number_pages(pullrequests_document, CSS_CLASSES["pullrequest_pagination"])
-      puts number_pages
+      for page_index in 1..3
+        pullrequests_per_page_url = "#{@repository_url}/pulls?page=#{page_index}&q="
+
+        pullrequests_page_document = connect(pullrequests_per_page_url)
+        if pullrequests_page_document
+          pullrequests_page_document.css(CSS_CLASSES['pullrequest_box']).each do |pullrequest_box|
+            pullrequest_id = pullrequest_box['id']
+            pullrequest_number = pullrequest_id.split('_').last.to_i
+            puts pullrequest_number
+
+            
+          end
+        end
+      end
     end
   end
 
@@ -60,7 +72,7 @@ end
 
 if __FILE__ == $0
   organization = "vercel"
-  repository_name = "lua-bcrypt"
+  repository_name = "next.js"
   repository = Repository.new(organization, repository_name)
   repository.get_pullrequests()
 end
