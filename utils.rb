@@ -2,6 +2,10 @@ require "sorbet-runtime"
 require "httparty"
 require "nokogiri"
 
+
+extend T::Sig
+
+
 GITHUB_URL = "https://github.com"
 
 CSS_CLASSES = {
@@ -9,11 +13,38 @@ CSS_CLASSES = {
   "pullrequest_pagination" => ".paginate-container.d-none.d-sm-flex.flex-sm-justify-center",
   "repository" => ".ListItem-module__listItem--kHali .Title-module__anchor--SyQM6 span",
   "archive" => ".flash.flash-warn.flash-full.border-top-0.text-center.text-bold.py-2",
-  "pullrequest_box" => ".Box-row.Box-row--focus-gray.p-0.mt-0.js-navigation-item.js-issue-row"
+  "pullrequest_box" => ".Box-row.Box-row--focus-gray.p-0.mt-0.js-navigation-item.js-issue-row",
+  "title" => ".js-issue-title.markdown-title",
+  "additions" => "#diffstat .color-fg-success",
+  "deletions" => "#diffstat .color-fg-danger",
+  "status" => ".flex-shrink-0.mb-2.flex-self-start.flex-md-self-center span.State",
+  "relative_time" => "relative-time",
+  "closed_time" => ".TimelineItem-body",
+  "merged_time" => "div.d-flex.flex-items-center.flex-wrap.mt-0.gh-header-meta div.flex-auto.min-width-0.mb-2 relative-time",
 }
 
+class PRStatus < T::Enum
+  enums do
+    Open    = new
+    Closed  = new
+    Merged  = new
+    Draft   = new
+    Unknown = new
+  end
 
-extend T::Sig
+  STATUS_MAP = {
+    "open"   => Open,
+    "closed" => Closed,
+    "merged" => Merged,
+    "draft"  => Draft
+  }
+
+  def self.from_string(raw)
+    STATUS_MAP[raw.strip.downcase] || Unknown
+  end
+end
+
+
 
 sig { params(url: String, rate_limiter: Integer).returns(T.nilable(Nokogiri::HTML::Document)) }
 def connect(url, rate_limiter = 1)

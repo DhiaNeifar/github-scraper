@@ -1,6 +1,7 @@
 require "sorbet-runtime"
 
 require_relative "utils"
+require_relative "PullRequest"
 
 class Repository
   extend T::Sig
@@ -44,27 +45,12 @@ class Repository
           pullrequests_page_document.css(CSS_CLASSES['pullrequest_box']).each do |pullrequest_box|
             pullrequest_id = pullrequest_box['id']
             pullrequest_number = pullrequest_id.split('_').last.to_i
-            puts pullrequest_number
-
-            
+            pullrequest = PullRequest.new(@organization, @repository_name, @pull_number)
           end
         end
       end
     end
   end
-
-
-  """
-    for page_index in 1..number_pages
-      if pullrequests_page_document
-        pullrequests_page_document.css(CSS_CLASSES['repository']).each do |repository_name|
-          repository_name = repository_name.text.strip
-          @repositories << repository_name
-          repository = Repository.new(@organization, repository_name)
-        end
-      end
-    end
-  end"""
 
 end
 
