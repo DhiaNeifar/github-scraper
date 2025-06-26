@@ -19,8 +19,11 @@ CSS_CLASSES = {
   "deletions" => "#diffstat .color-fg-danger",
   "status" => ".flex-shrink-0.mb-2.flex-self-start.flex-md-self-center span.State",
   "relative_time" => "relative-time",
-  "closed_time" => ".TimelineItem-body",
+  "comments" => ".TimelineItem-body",
   "merged_time" => "div.d-flex.flex-items-center.flex-wrap.mt-0.gh-header-meta div.flex-auto.min-width-0.mb-2 relative-time",
+  "author" => ".author.Link--secondary.text-bold.css-truncate.css-truncate-target.expandable",
+  "number_changed_files" => "#files_tab_counter",
+  "number_commits" => "#commits_tab_counter",
 }
 
 class PRStatus < T::Enum
