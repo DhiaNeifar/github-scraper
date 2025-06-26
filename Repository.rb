@@ -1,5 +1,6 @@
 require "sorbet-runtime"
 
+require_relative "utils"
 
 class Repository
   extend T::Sig
@@ -23,16 +24,43 @@ class Repository
 
     @repository_url = "#{GITHUB_URL}/#{@organization}/#{@name}"
     repository_document = test_connection(@repository_url)
-    css_class_archive = ".flash.flash-warn.flash-full.border-top-0.text-center.text-bold.py-2"
-    variable = repository_document.css(css_class_archive)
-    puts variable
-    @is_public = nil
-    @is_archived = nil
+    @is_archived = !repository_document.at_css(CSS_CLASSES["archive"]).nil?
+
+
+    # is_public = nil
+  end
+
+  sig { void }
+  def get_pullrequests()
+    pullrequests_url = "#{@repository_url}/pulls?q="
+    puts pullrequests_url
+    pullrequests_document = test_connection(pullrequests_url)
+    if pullrequests_document
+      number_pages = get_number_pages(pullrequests_document, CSS_CLASSES["pullrequest_pagination"])
+      puts number_pages
+    end
   end
 
 
-  sig { return Repository }
-  def par
+  """
+    for page_index in 1..number_pages
+      if pullrequests_page_document
+        pullrequests_page_document.css(CSS_CLASSES['repository']).each do |repository_name|
+          repository_name = repository_name.text.strip
+          @repositories << repository_name
+          repository = Repository.new(@organization, repository_name)
+        end
+      end
+    end
+  end"""
 
-  end
+end
+
+
+
+if __FILE__ == $0
+  organization = "vercel"
+  repository_name = "lua-bcrypt"
+  repository = Repository.new(organization, repository_name)
+  repository.get_pullrequests()
 end
