@@ -20,33 +20,13 @@ CSS_CLASSES = {
   "status" => ".flex-shrink-0.mb-2.flex-self-start.flex-md-self-center span.State",
   "relative_time" => "relative-time",
   "comments" => ".TimelineItem-body",
-  "merged_time" => "div.d-flex.flex-items-center.flex-wrap.mt-0.gh-header-meta div.flex-auto.min-width-0.mb-2 relative-time",
+  "merged_at" => "div.d-flex.flex-items-center.flex-wrap.mt-0.gh-header-meta div.flex-auto.min-width-0.mb-2 relative-time",
   "author" => ".author.Link--secondary.text-bold.css-truncate.css-truncate-target.expandable",
   "number_changed_files" => "#files_tab_counter",
   "number_commits" => "#commits_tab_counter",
+  "reviews" => ".TimelineItem-body.d-flex.flex-column.flex-md-row.flex-justify-start",
+  "user_nickname" => ".p-name.vcard-fullname.d-block.overflow-hidden"
 }
-
-class PRStatus < T::Enum
-  enums do
-    Open    = new
-    Closed  = new
-    Merged  = new
-    Draft   = new
-    Unknown = new
-  end
-
-  STATUS_MAP = {
-    "open"   => Open,
-    "closed" => Closed,
-    "merged" => Merged,
-    "draft"  => Draft
-  }
-
-  def self.from_string(raw)
-    STATUS_MAP[raw.strip.downcase] || Unknown
-  end
-end
-
 
 
 sig { params(url: String, rate_limiter: Integer).returns(T.nilable(Nokogiri::HTML::Document)) }
@@ -81,9 +61,7 @@ def get_number_pages(document, css_class)
   elements = document.css(css_class)
 
   numbers = elements.flat_map do |el|
-    # Pull from text and known attributes
     sources = [el.text, el['aria-label'], el['data-total-pages']].compact
-
     sources.flat_map { |txt| txt.scan(/\d+/).map(&:to_i) }
   end
 

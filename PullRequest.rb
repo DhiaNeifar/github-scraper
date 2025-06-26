@@ -3,6 +3,10 @@ require "time"
 
 
 require_relative "utils"
+require_relative "Enums"
+require_relative "User"
+require_relative "Review"
+
 
 class PullRequest
   extend T::Sig
@@ -21,15 +25,15 @@ class PullRequest
   attr_accessor :status
 
   sig { returns(T.nilable(Time)) }
-  attr_accessor :updated_time
+  attr_accessor :updated_at
 
   sig { returns(T.nilable(Time)) }
-  attr_accessor :closed_time
+  attr_accessor :closed_at
 
   sig { returns(T.nilable(Time)) }
-  attr_accessor :merged_time
+  attr_accessor :merged_at
 
-  sig { returns(String) }
+  sig { returns(User) }
   attr_accessor :author
 
   sig { returns(T.nilable(Integer)) }
@@ -43,6 +47,9 @@ class PullRequest
 
   sig { returns(Integer) }
   attr_accessor :number_commits
+
+  sig { returns(T::Arrar[Review]) }
+  attr_accessor :reviews
 
 
 
@@ -69,25 +76,25 @@ class PullRequest
       all_times = pullrequest_document.css(CSS_CLASSES["relative_time"]).map { |el| Time.parse(el['datetime']) }
       @updated_time = all_times ? all_times.max : nil
 
-      @closed_time = nil
+      @closed_at = nil
       if @status == PRStatus::Closed
         pullrequest_document.css(CSS_CLASSES["comments"]).each do |comment|
           if comment.text.include?("closed this")
-            comment_time = comment.at_css(CSS_CLASSES["relative_time"])
-            @closed_time = Time.parse(comment_time['datetime']) if comment_time
+            commented_at = comment.at_css(CSS_CLASSES["relative_time"])
+            @closed_at = Time.parse(commented_at['datetime']) if commented_at
             break
           end
         end
       end
 
-      @merged_time = nil
+      @merged_at = nil
       if @status == PRStatus::Merged
-        merged_time = pullrequest_document.css(CSS_CLASSES["merged_time"]).at_css(CSS_CLASSES["relative_time"])
-        @merged_time = Time.parse(merged_time['datetime']) if merged_time
+        merged_at = pullrequest_document.css(CSS_CLASSES["merged_at"]).at_css(CSS_CLASSES["relative_time"])
+        @merged_at = Time.parse(merged_at['datetime']) if merged_at
       end
 
       author = pullrequest_document.at_css(CSS_CLASSES["author"])
-      @author = author ? author.text&.strip : ""
+      @author = author ? User.new(author.text&.strip) : nil
 
       number_changed_files = pullrequest_document.at_css(CSS_CLASSES["number_changed_files"])
       @changed_files = number_changed_files ? number_changed_files.text.strip.to_i : 0
@@ -95,7 +102,34 @@ class PullRequest
       number_commits = pullrequest_document.at_css(CSS_CLASSES["number_commits"])
       @number_commits = number_commits ? number_commits.text.strip.to_i : 0
 
-      print_summary
+
+
+
+      reviews = pullrequest_document.css(CSS_CLASSES["reviews"])
+      @reviews = []
+
+      reviews.each do |review|
+        reviewer = review.at_css("strong a.author")
+        reviewer = reviewer ? User.new(reviewer.text.strip) : nil
+
+        review_text = review.text.downcase
+        state =
+          if review_text.include?("approved")
+            ReviewState::Approved
+          elsif review_text.include?("requested changes")
+            ReviewState::ChangesRequested
+          elsif review_text.include?("reviewed")
+            ReviewState::Reviewed
+          else
+            ReviewState::Unknown
+          end
+
+        submitted_at = review.at_css("relative-time")
+        submitted_at = submitted_at ? Time.parse(submitted_at["datetime"]) : nil
+
+        review = Review.new(reviewer, state, submitted_at)
+        @reviews << review
+      end
     end
   end
 
@@ -120,7 +154,7 @@ end
 if __FILE__ == $0
     organization = "vercel"
     repository_name = "next.js"
-    pull_number = 80716
+    pull_number = 80901
 
     pullrequest = PullRequest.new(organization, repository_name, pull_number)
 end
