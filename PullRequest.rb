@@ -106,7 +106,7 @@ class PullRequest
 
 
       reviews = pullrequest_document.css(CSS_CLASSES["reviews"])
-      @reviews = []
+      @reviews = Array.new()
 
       reviews.each do |review|
         reviewer = review.at_css("strong a.author")

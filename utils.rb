@@ -31,39 +31,57 @@ CSS_CLASSES = {
 
 sig { params(url: String, rate_limiter: Integer).returns(T.nilable(Nokogiri::HTML::Document)) }
 def connect(url, rate_limiter = 1)
+
   loop do
+
     response = HTTParty.get(url)
 
     case response.code
+
     when 200..299
+
       return Nokogiri::HTML(response.body)
+
     when 429
-      puts "Error 429: Too Many Requests => Rate limited. Sleeping for #{rate_limiter} seconds..."
+
+      puts "Error 429: Too Many Requests for #{url} => Rate limited. Sleeping for #{rate_limiter} seconds..."
       sleep(rate_limiter)
       rate_limiter *= 2
+
     else
+
       puts "Request failed with status code: #{response.code}"
-      return nil
+      nil
+
     end
+
   end
+
 rescue SocketError => e
-  puts "Network error: #{e.message}"
+
+  puts "Network error to #{url}: #{e.message}"
   nil
+
 rescue StandardError => e
-  puts "Unexpected error: #{e.message}"
+
+  puts "Unexpected error to #{url}: #{e.message}"
   nil
+
 end
 
 
 
 sig { params(document: Nokogiri::HTML::Document, css_class: String).returns(Integer) }
 def get_number_pages(document, css_class)
-  elements = document.css(css_class)
 
+  elements = document.css(css_class)
   numbers = elements.flat_map do |el|
+
     sources = [el.text, el['aria-label'], el['data-total-pages']].compact
     sources.flat_map { |txt| txt.scan(/\d+/).map(&:to_i) }
+
   end
 
   numbers.max || 1
+
 end

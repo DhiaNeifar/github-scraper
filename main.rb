@@ -1,12 +1,12 @@
 require "optparse"
 
-require_relative "Scraper"
+require_relative "organization"
 
 
 def main(options)
-  scraper = Scraper.new(options[:org])
-
-  scraper.scrape()
+  organization = options[:org]
+  organization = Organization.new(organization)
+  organization.scrape
 end
 
 
