@@ -9,6 +9,7 @@ require_relative "Review"
 
 
 class PullRequest
+
   extend T::Sig
 
 
@@ -169,10 +170,12 @@ end
 
 
 if __FILE__ == $0
+
     organization = "vercel"
     repository_name = "next.js"
     pull_number = 80732
     pullrequest_url = "#{GITHUB_URL}/#{organization}/#{repository_name}/pull/#{pull_number}"
     puts pullrequest_url
     pullrequest = PullRequest.new(pullrequest_url, pull_number)
+    
 end

@@ -1,10 +1,13 @@
 class PRStatus < T::Enum
+
   enums do
+
     Open    = new
     Closed  = new
     Merged  = new
     Draft   = new
     Unknown = new
+
   end
 
   STATUS_MAP = {
@@ -15,17 +18,23 @@ class PRStatus < T::Enum
   }
 
   def self.from_string(raw)
+
     STATUS_MAP[raw.strip.downcase] || Unknown
+
   end
+
 end
 
 
 class ReviewState < T::Enum
+
   enums do
+
     Approved          = new
     ChangesRequested  = new
     Reviewed          = new
     Unknown           = new
+
   end
 
   STATE_MAP = {
@@ -35,7 +44,10 @@ class ReviewState < T::Enum
   }
 
   def self.from_string(raw)
+
     key = raw.strip.downcase.gsub(/\s+/, "_")
     STATE_MAP[key] || Unknown
+
   end
+  
 end

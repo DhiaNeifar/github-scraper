@@ -7,6 +7,7 @@ require_relative "Repository"
 
 
 class Organization
+
   extend T::Sig
 
   sig { returns(String) }
@@ -43,7 +44,7 @@ class Organization
   sig { params(number_pages: Integer).void }
   def get_repositories(number_pages)
 
-    for page_index in 1..1 # number_pages
+    for page_index in 1..1
 
       repositories_per_page_url = "#{@repositories_url}?page=#{page_index}"
       repositories_page_document = connect(repositories_per_page_url)
@@ -64,6 +65,8 @@ class Organization
 end
 
 if __FILE__ == $0
+
   organization = Organization.new("vercel")
   puts organization.repositories.length
+  
 end

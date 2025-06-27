@@ -3,6 +3,7 @@ require "sorbet-runtime"
 require_relative "utils"
 require_relative "PullRequest"
 
+
 class Repository
   extend T::Sig
 
@@ -31,10 +32,7 @@ class Repository
     @pullrequests = Array.new()
 
     scrape
-
-    # get_pullrequests
-
-    # puts pullrequests.length
+    
   end
 
   sig { void }
@@ -65,23 +63,29 @@ class Repository
             pullrequest_number = pullrequest_id.split('_').last.to_i
 
             pullrequest_url = "#{@repository_url}/pull/#{pullrequest_number}"
-            print "\nPull Request #{pullrequest_number} \n"
             pullrequest = PullRequest.new(pullrequest_url, pullrequest_number)
             @pullrequests << pullrequest
 
           end
+
         end
+
       end
+
     end
+
   end
+
 end
 
 
 
 if __FILE__ == $0
+
   organization = "vercel"
   repository_name = "next.js"
   repository_url = "#{GITHUB_URL}/#{organization}/#{repository_name}"
   repository = Repository.new(repository_name, repository_url)
   puts "Total number of pull requests: #{repository.pullrequests.length}"
+
 end

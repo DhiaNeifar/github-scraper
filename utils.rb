@@ -5,7 +5,6 @@ require "nokogiri"
 
 extend T::Sig
 
-
 GITHUB_URL = "https://github.com"
 
 CSS_CLASSES = {
@@ -27,7 +26,6 @@ CSS_CLASSES = {
   "reviews" => ".TimelineItem-body.d-flex.flex-column.flex-md-row.flex-justify-start div.flex-auto.flex-md-self-center",
   "user_nickname" => ".p-name.vcard-fullname.d-block.overflow-hidden"
 }
-
 
 sig { params(url: String, rate_limiter: Integer).returns(T.nilable(Nokogiri::HTML::Document)) }
 def connect(url, rate_limiter = 1)
@@ -68,7 +66,6 @@ rescue StandardError => e
   return nil
 
 end
-
 
 
 sig { params(document: Nokogiri::HTML::Document, css_class: String).returns(Integer) }
