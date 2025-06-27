@@ -24,7 +24,7 @@ CSS_CLASSES = {
   "author" => ".author.Link--secondary.text-bold.css-truncate.css-truncate-target.expandable",
   "number_changed_files" => "#files_tab_counter",
   "number_commits" => "#commits_tab_counter",
-  "reviews" => ".TimelineItem-body.d-flex.flex-column.flex-md-row.flex-justify-start",
+  "reviews" => ".TimelineItem-body.d-flex.flex-column.flex-md-row.flex-justify-start div.flex-auto.flex-md-self-center",
   "user_nickname" => ".p-name.vcard-fullname.d-block.overflow-hidden"
 }
 
@@ -50,8 +50,8 @@ def connect(url, rate_limiter = 1)
 
     else
 
-      puts "Request failed with status code: #{response.code}"
-      nil
+      puts "Request failed with status code to #{url}: #{response.code}"
+      return nil
 
     end
 
@@ -60,12 +60,12 @@ def connect(url, rate_limiter = 1)
 rescue SocketError => e
 
   puts "Network error to #{url}: #{e.message}"
-  nil
+  return nil
 
 rescue StandardError => e
 
   puts "Unexpected error to #{url}: #{e.message}"
-  nil
+  return nil
 
 end
 

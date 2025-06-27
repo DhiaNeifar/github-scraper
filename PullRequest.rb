@@ -53,10 +53,12 @@ class PullRequest
 
 
 
-  sig { params(organization: String, repository_name: String, pull_number: Integer).void }
-  def initialize(organization, repository_name, pull_number)
+  sig { params(pullrequest_url: String, pull_number: Integer).void }
+  def initialize(pullrequest_url, pull_number)
+
     @number = pull_number
-    @pullrequest_url = "#{GITHUB_URL}/#{organization}/#{repository_name}/pull/#{@number}"
+    @pullrequest_url = pullrequest_url
+    @reviews = Array.new()
 
     pullrequest_document = connect(pullrequest_url)
     if pullrequest_document
@@ -78,19 +80,27 @@ class PullRequest
 
       @closed_at = nil
       if @status == PRStatus::Closed
+
         pullrequest_document.css(CSS_CLASSES["comments"]).each do |comment|
+
           if comment.text.include?("closed this")
+
             commented_at = comment.at_css(CSS_CLASSES["relative_time"])
             @closed_at = Time.parse(commented_at['datetime']) if commented_at
             break
+
           end
+
         end
+
       end
 
       @merged_at = nil
       if @status == PRStatus::Merged
+
         merged_at = pullrequest_document.css(CSS_CLASSES["merged_at"]).at_css(CSS_CLASSES["relative_time"])
         @merged_at = Time.parse(merged_at['datetime']) if merged_at
+
       end
 
       author = pullrequest_document.at_css(CSS_CLASSES["author"])
@@ -102,15 +112,8 @@ class PullRequest
       number_commits = pullrequest_document.at_css(CSS_CLASSES["number_commits"])
       @number_commits = number_commits ? number_commits.text.strip.to_i : 0
 
-
-
-
       reviews = pullrequest_document.css(CSS_CLASSES["reviews"])
-      @reviews = Array.new()
-
       reviews.each do |review|
-        reviewer = review.at_css("strong a.author")
-        reviewer = reviewer ? User.new(reviewer.text.strip) : nil
 
         review_text = review.text.downcase
         state =
@@ -124,17 +127,28 @@ class PullRequest
             ReviewState::Unknown
           end
 
-        submitted_at = review.at_css("relative-time")
-        submitted_at = submitted_at ? Time.parse(submitted_at["datetime"]) : nil
+        if state != ReviewState::Unknown
 
-        review = Review.new(reviewer, state, submitted_at)
-        @reviews << review
+          reviewer = review.at_css("strong a.author")
+          reviewer = reviewer ? User.new(reviewer.text.strip) : nil
+
+          submitted_at = review.at_css("relative-time")
+          submitted_at = submitted_at ? Time.parse(submitted_at["datetime"]) : nil
+
+          @reviews << Review.new(reviewer, state, submitted_at)
+
+        end
+
       end
+
+    print_summary
     end
+
   end
 
   sig { void }
   def print_summary
+
     puts "Pull Request ##{@number}"
     puts "URL: #{@pullrequest_url}"
     puts "Title: #{@title}"
@@ -142,19 +156,23 @@ class PullRequest
     puts "Updated Time: #{@updated_time}"
     puts "Closed Time: #{@closed_time}"
     puts "Merged Time: #{@merged_time}"
-    puts "Author: #{@author}"
+    puts "Author: #{@author.name}"
     puts "Additions: #{@additions}"
     puts "Deletions: #{@deletions}"
     puts "Changed Files: #{@changed_files}"
     puts "Number of Commits: #{@number_commits}"
+    puts "Number of Reviews: #{@reviews.length}"
+
   end
+
 end
 
 
 if __FILE__ == $0
     organization = "vercel"
     repository_name = "next.js"
-    pull_number = 80901
-
-    pullrequest = PullRequest.new(organization, repository_name, pull_number)
+    pull_number = 80732
+    pullrequest_url = "#{GITHUB_URL}/#{organization}/#{repository_name}/pull/#{pull_number}"
+    puts pullrequest_url
+    pullrequest = PullRequest.new(pullrequest_url, pull_number)
 end

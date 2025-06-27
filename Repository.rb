@@ -30,7 +30,7 @@ class Repository
     @is_archived = nil
     @pullrequests = Array.new()
 
-    # scrape
+    scrape
 
     # get_pullrequests
 
@@ -41,25 +41,35 @@ class Repository
   def scrape
 
     repository_document = connect(@repository_url)
-    @is_archived = !repository_document.at_css(CSS_CLASSES["archive"]).nil?
+    if repository_document
+
+      @is_archived = !repository_document.at_css(CSS_CLASSES["archive"]).nil?
+
+    end
 
     pullrequests_url = "#{@repository_url}/pulls?q="
     pullrequests_document = connect(pullrequests_url)
-    number_pages = get_number_pages(pullrequests_document, CSS_CLASSES["pullrequest_pagination"])
+    if pullrequests_document
 
-    for page_index in 1..3 # number_pages
+      number_pages = get_number_pages(pullrequests_document, CSS_CLASSES["pullrequest_pagination"])
 
-      pullrequests_per_page_url = "#{@repository_url}/pulls?page=#{page_index}&q="
-      pullrequests_page_document = connect(pullrequests_per_page_url)
-      if pullrequests_page_document
+      for page_index in 1..number_pages
 
-        pullrequests_page_document.css(CSS_CLASSES['pullrequest_box']).each do |pullrequest_box|
+        pullrequests_per_page_url = "#{@repository_url}/pulls?page=#{page_index}&q="
+        pullrequests_page_document = connect(pullrequests_per_page_url)
+        if pullrequests_page_document
 
-          pullrequest_id = pullrequest_box['id']
-          pullrequest_number = pullrequest_id.split('_').last.to_i
-          pullrequest = PullRequest.new(@organization, @repository_name, @pull_number)
-          @pullreuests << pullrequest
+          pullrequests_page_document.css(CSS_CLASSES['pullrequest_box']).each do |pullrequest_box|
 
+            pullrequest_id = pullrequest_box['id']
+            pullrequest_number = pullrequest_id.split('_').last.to_i
+
+            pullrequest_url = "#{@repository_url}/pull/#{pullrequest_number}"
+            print "\nPull Request #{pullrequest_number} \n"
+            pullrequest = PullRequest.new(pullrequest_url, pullrequest_number)
+            @pullrequests << pullrequest
+
+          end
         end
       end
     end
@@ -71,6 +81,7 @@ end
 if __FILE__ == $0
   organization = "vercel"
   repository_name = "next.js"
-  repository = Repository.new(organization, repository_name)
-  repository.get_pullrequests()
+  repository_url = "#{GITHUB_URL}/#{organization}/#{repository_name}"
+  repository = Repository.new(repository_name, repository_url)
+  puts "Total number of pull requests: #{repository.pullrequests.length}"
 end

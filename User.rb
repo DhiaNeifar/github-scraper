@@ -16,21 +16,33 @@ class User
 
   sig { params(name: String).void }
   def initialize(name)
+
     @name = name
     @url = "#{GITHUB_URL}/#{@name}"
+
     get_nickname
+
   end
 
   sig { void }
   def get_nickname
+
+    @nickname = ""
     user_document = connect(@url)
-    user_nickname = user_document.css(CSS_CLASSES["user_nickname"])
-    @nickname = user_nickname ? user_nickname.text.strip : ""
+    if user_document
+
+      user_nickname = user_document.css(CSS_CLASSES["user_nickname"])
+      @nickname = user_nickname
+
+    end
+
   end
+
 end
 
 
 if __FILE__ == $0
-  user = User.new("DhiaNeifar")
 
+  user = User.new("DhiaNeifar")
+  
 end
