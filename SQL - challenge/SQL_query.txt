@@ -1,0 +1,118 @@
+WITH CTE AS (
+
+SELECT DISTINCT
+		a.id AS account_id,
+        ss.id as snapshot_squad_id,
+        ss.name as snapshot_squad_name,
+        u.id AS user_id,
+        sri.value,
+        sri.na,
+        sri.skipped,
+        f.id AS factor_id,
+        f.name AS factor_name
+
+    FROM snapshot_requests 					        srq
+    	INNER JOIN squads   				          sq   		ON sq.id = srq.squad_id
+        INNER JOIN accounts 				        a  			ON a.id =  sq.account_id
+        INNER JOIN users   					        u       ON u.id = srq.user_id 					      AND a.id = u.account_id 	  AND u.squad_id = sq.id
+        INNER JOIN snapshots 				        s 			ON a.id = s.account_id 					      AND s.id = srq.snapshot_id
+        INNER JOIN snapshot_squads 			    ss 			ON ss.id = srq.snapshot_squad_id 		  AND s.id = ss.snapshot_id 	AND sq.id = ss.squad_id
+        INNER JOIN snapshot_responses 		  sr 			ON sr.id = srq.snapshot_response_id 	AND s.id = sr.snapshot_id 	AND u.id = sr.user_id
+        INNER JOIN snapshot_response_items 	sri 		ON SR.ID = sri.snapshot_response_id
+        INNER JOIN snapshot_factors 		    sf 			ON s.id = sf.snapshot_id
+        INNER JOIN factors 					        f 			ON f.id = sf.factor_id 					      AND f.id = sri.factor_id
+),
+
+counts AS (
+
+    SELECT
+        snapshot_squad_id,
+        factor_id,
+        sum(CASE
+                WHEN value IS NULL 		THEN 0
+                WHEN na = TRUE 			  THEN 0
+                WHEN skipped = TRUE 	THEN 0
+                ELSE 1
+        END) AS participated_count,
+
+        count(*) AS team_size,
+
+        sum(CASE
+                WHEN value = 1 			 THEN 1
+                ELSE 0
+        END) AS one_count,
+
+        sum(CASE
+                WHEN value = 2 			 THEN 1
+                ELSE 0
+        END) AS two_count,
+
+        sum(CASE
+                WHEN value >= 3 		 THEN 1
+                ELSE 0
+        END) AS three_count
+
+    FROM CTE
+
+    GROUP BY
+        snapshot_squad_id,
+        factor_id
+),
+
+score AS (
+    SELECT
+        snapshot_squad_id,
+        factor_id,
+        round((three_count::decimal / NULLIF (participated_count, 0)), 2)  * 100 AS score
+    FROM counts
+),
+
+percentiles AS (
+    SELECT
+    factor_id,
+    p_50,
+    p_75,
+    p_90
+    FROM benchmark_factors bf
+    WHERE benchmark_segment_id = (SELECT id FROM benchmark_segments)
+),
+
+hierarchy AS (
+
+    SELECT
+        ssh.descendant_id as snapshot_squad_id,
+        STRING_AGG(ancestor_ss.name, ' > ' ORDER BY ssh.generations DESC) as parents
+
+    FROM snapshot_squad_hierarchies ssh
+
+    INNER JOIN snapshot_squads ancestor_ss ON ancestor_ss.id = ssh.ancestor_id
+
+    WHERE ssh.generations > 0
+
+    GROUP BY ssh.descendant_id
+)
+
+SELECT DISTINCT
+
+    CTE.snapshot_squad_id,
+    CTE.snapshot_squad_name,
+    COALESCE(h.parents, '') AS parents,
+    score.score,
+    counts.one_count,
+    counts.two_count,
+    counts.three_count,
+    counts.team_size,
+    score.score - percentiles.p_50 AS vs_industry_P50,
+    score.score - percentiles.p_75 AS vs_industry_P75,
+    score.score - percentiles.p_90 AS vs_industry_P90,
+    CTE.factor_id,
+    CTE.factor_name
+
+FROM CTE
+
+INNER 	JOIN counts 		  USING   (snapshot_squad_id, factor_id)
+INNER 	JOIN score 			  USING   (snapshot_squad_id, factor_id)
+INNER 	JOIN percentiles 	USING   (factor_id)
+LEFT 	JOIN hierarchy   h 	ON 	  	h.snapshot_squad_id = counts.snapshot_squad_id
+
+WHERE snapshot_squad_name = 'SecOps' and factor_id = 223

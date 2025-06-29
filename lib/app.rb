@@ -57,7 +57,7 @@ def main(options)
   if organization_document
     Rails.logger.info("[#{Time.current.strftime('%H:%M:%S')}] Successfully connected to organization")
 
-
+    organization = Organization.find_or_initialize_by(name: organization_name)
     organization.url = organization_url
     organization.save!
 
