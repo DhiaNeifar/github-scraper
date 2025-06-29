@@ -1,4 +1,3 @@
-require "sorbet-runtime"
 require "httparty"
 require "nokogiri"
 require "active_record"
@@ -6,8 +5,6 @@ require "yaml"
 require "erb"
 require "dotenv/load"
 
-
-extend T::Sig
 
 GITHUB_URL = "https://github.com"
 
@@ -29,8 +26,7 @@ CSS_CLASSES = {
   "user_nickname" => ".p-name.vcard-fullname.d-block.overflow-hidden"
 }
 
-sig { params(url: String, timeout: Integer).returns(T.nilable(Nokogiri::HTML::Document)) }
-def connect(url, timeout = 1)
+def connect(logger, url, timeout = 1)
 
   loop do
 
@@ -44,13 +40,13 @@ def connect(url, timeout = 1)
 
     when 429
 
-      puts "Error 429: Too Many Requests for #{url} => Rate limited. Sleeping for #{timeout} seconds..."
+      logger.error("Error 429: Too Many Requests for #{url} => Rate limited. Sleeping for #{timeout} seconds...")
       sleep(timeout)
       timeout *= 2
 
     else
 
-      puts "Request failed with status code to #{url}: #{response.code}"
+      logger.error("[#{Time.current.strftime('%H:%M:%S')}] Request failed with status code to #{url}: #{response.code}")
       return nil
 
     end
@@ -59,18 +55,17 @@ def connect(url, timeout = 1)
 
 rescue SocketError => e
 
-  puts "Network error to #{url}: #{e.message}"
+  logger.error("[#{Time.current.strftime('%H:%M:%S')}] Network error to #{url}: #{e.message}")
   return nil
 
 rescue StandardError => e
 
-  puts "Unexpected error to #{url}: #{e.message}"
+  logger.error("[#{Time.current.strftime('%H:%M:%S')}] Unexpected error to #{url}: #{e.message}")
   return nil
 
 end
 
 
-sig { params(document: Nokogiri::HTML::Document, css_class: String).returns(Integer) }
 def get_number_pages(document, css_class)
 
   elements = document.css(css_class)
