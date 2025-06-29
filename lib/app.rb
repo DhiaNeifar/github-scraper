@@ -57,7 +57,7 @@ def main(options)
   if organization_document
     Rails.logger.info("[#{Time.current.strftime('%H:%M:%S')}] Successfully connected to organization")
 
-    organization = Organization.find_or_initialize_by(name: organization_name)
+
     organization.url = organization_url
     organization.save!
 
@@ -160,9 +160,8 @@ def extract_repositories_data(organization, logger)
     repositories_data.concat(page_repositories)
     Rails.logger.info("[#{Time.current.strftime('%H:%M:%S')}] Extracted repositories from page #{repositories_url} (total: #{repositories_data.length})")
 
-    # BREAK AFTER SCRAPING 10 REPOSITORIES BECAUSE IT IS TAKING TOO LONG TO TEST
-
-    break if repositories_data.length >= 10
+    # UNCOMMENT IF YOU WANT TO BREAK AFTER SCRAPING 10 REPOSITORIES BECAUSE IT IS TAKING TOO LONG TO TEST
+    # break if repositories_data.length >= 10
   end
 
   repositories_data
